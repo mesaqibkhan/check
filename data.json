@@ -1,0 +1,19 @@
+{
+  "products": [
+    {
+      "icon": "laptop",
+      "name": "Dell Latitude 7490",
+      "specs": "i5 • 16GB RAM • 512GB SSD",
+      "price": "₹22,000",
+      "features": ["90 Day Warranty", "Clean Install", "Tested Battery"]
+    }
+  ],
+  "clients": [
+    { "src": "https://upload.wikimedia.org/wikipedia/commons/6/69/TCS_Logo.svg", "alt": "TCS" },
+    { "src": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Infosys_logo.svg", "alt": "Infosys" }
+  ],
+  "siteText": {
+    "heroTitle": "Simplifying E-Waste Management for IT Companies",
+    "heroDesc": "Trusted partner for ITAD and e-waste recycling."
+  }
+}
