@@ -1,5 +1,54 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Download, Eye, EyeOff, Edit, Trash, X, Plus, Save, Lock, Upload, Image as ImageIcon } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Greylon Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+    .gradient-animate {
+      background: linear-gradient(-45deg, #10b981, #059669, #34d399, #6ee7b7);
+      background-size: 400% 400%;
+      animation: gradient 15s ease infinite;
+    }
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+    .shimmer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 3s infinite;
+    }
+    @keyframes shimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+<div id="app"></div>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
 
 // Default credentials
 const DEFAULT_CREDENTIALS = {
@@ -11,51 +60,41 @@ function AdminDashboard() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [activeTab, setActiveTab] = useState("products");
-  const [products, setProducts] = useState([
-    {
-      icon: "laptop",
-      name: "Dell Latitude 7490",
-      specs: "i5 • 16GB RAM • 512GB SSD",
-      price: "₹22,000",
-      features: ["90 Day Warranty", "Clean Install", "Tested Battery"],
-      image: "https://images.unsplash.com/photo-1593642632823-8f785ba67e45?w=400"
-    }
-  ]);
-  const [clients, setClients] = useState([
-    { src: "https://upload.wikimedia.org/wikipedia/commons/6/69/TCS_Logo.svg", alt: "TCS" },
-    { src: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Infosys_logo.svg", alt: "Infosys" }
-  ]);
-  const [siteText, setSiteText] = useState({
-    heroTitle: "Simplifying E-Waste Management for IT Companies",
-    heroDesc: "Trusted partner for IT Asset Disposition (ITAD) and e-waste recycling.",
-    productsTitle: "Certified Refurbished IT Equipment",
-    productsDesc: "Quality-tested, warranty-backed solutions for startups, offices, and institutions"
-  });
-  const [showPreview, setShowPreview] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [activeTab, setActiveTab] = useState("products");
+  const [products, setProducts] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [siteText, setSiteText] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [showPreview, setShowPreview] = useState(false);
 
-  // Load credentials from storage
+  // Load data from data.json
   useEffect(() => {
-    const loadCredentials = async () => {
-      try {
-        const result = await window.storage.get('admin_credentials');
-        if (result) {
-          // Credentials loaded from storage
-        }
-      } catch (error) {
-        console.log('Using default credentials');
-      }
-    };
-    loadCredentials();
+    fetch('data.json')
+      .then(r => r.json())
+      .then(data => {
+        setProducts(data.products || []);
+        setClients(data.clients || []);
+        setSiteText(data.siteText || {});
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading data:', err);
+        setLoading(false);
+        alert('Could not load data.json. Make sure it exists in the same folder.');
+      });
   }, []);
+
+  useEffect(() => {
+    setTimeout(() => window.lucide?.createIcons(), 100);
+  }, [activeTab, loggedIn]);
 
   const login = (e) => {
     e.preventDefault();
     if (email === DEFAULT_CREDENTIALS.email && password === DEFAULT_CREDENTIALS.password) {
       setLoggedIn(true);
     } else {
-      alert("Wrong credentials! Use: admin@greylon.com / greylon123");
+      alert("❌ Wrong credentials!\n\nUse:\nEmail: admin@greylon.com\nPassword: greylon123");
     }
   };
 
@@ -68,25 +107,25 @@ function AdminDashboard() {
     a.download = 'data.json';
     a.click();
     URL.revokeObjectURL(url);
-    alert("✅ Data saved! Download complete.");
+    alert("✅ Data saved! Download complete.\n\nReplace the old data.json file in your GitHub repo with this new file.");
   };
 
   if (!loggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50">
+      <div className="min-h-screen flex items-center justify-center p-4 gradient-animate">
         <div className="absolute inset-0 overflow-hidden opacity-20">
           <div className="absolute top-20 left-10 w-72 h-72 bg-green-400 rounded-full blur-3xl animate-pulse"></div>
           <div className="absolute bottom-20 right-10 w-96 h-96 bg-emerald-400 rounded-full blur-3xl animate-pulse"></div>
         </div>
-        <form onSubmit={login} className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md relative z-10 transform transition-all hover:scale-105">
+        <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md relative z-10 transform transition-all hover:scale-105">
           <div className="flex justify-center mb-6">
             <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center">
-              <Lock className="w-8 h-8 text-white" />
+              <i data-lucide="lock" className="w-8 h-8 text-white"></i>
             </div>
           </div>
           <h2 className="text-3xl font-bold text-center mb-2 text-gray-900">Admin Login</h2>
           <p className="text-center text-gray-600 mb-6">Greylon Dashboard</p>
-          <div className="space-y-4">
+          <form onSubmit={login} className="space-y-4">
             <input 
               type="email" 
               value={email} 
@@ -109,20 +148,32 @@ function AdminDashboard() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                <i data-lucide={showPassword ? "eye-off" : "eye"} className="w-5 h-5"></i>
               </button>
             </div>
             <button 
               type="submit" 
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-medium hover:shadow-xl transform hover:-translate-y-0.5 transition-all"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 rounded-xl font-medium hover:shadow-xl transform hover:-translate-y-0.5 transition-all shimmer"
             >
               Login to Dashboard
             </button>
+          </form>
+          <div className="mt-6 text-center text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
+            <p className="font-medium">Demo Credentials:</p>
+            <p>admin@greylon.com / greylon123</p>
           </div>
-          <div className="mt-6 text-center text-sm text-gray-500">
-            <p>Demo: admin@greylon.com / greylon123</p>
-          </div>
-        </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading data...</p>
+        </div>
       </div>
     );
   }
@@ -141,14 +192,14 @@ function AdminDashboard() {
             onClick={saveData} 
             className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
           >
-            <Download className="w-5 h-5" />
+            <i data-lucide="download" className="w-5 h-5"></i>
             Save Data
           </button>
           <button 
             onClick={() => setShowPreview(!showPreview)} 
             className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-xl flex items-center gap-2 hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
           >
-            {showPreview ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            <i data-lucide={showPreview ? "eye-off" : "eye"} className="w-5 h-5"></i>
             {showPreview ? "Hide" : "Show"} Preview
           </button>
         </div>
@@ -156,21 +207,21 @@ function AdminDashboard() {
 
       <div className="grid md:grid-cols-4 gap-4 mb-6">
         {[
-          { id: "products", label: "Products", icon: "📦" },
-          { id: "clients", label: "Clients", icon: "🤝" },
-          { id: "text", label: "Website Text", icon: "📝" },
-          { id: "settings", label: "Settings", icon: "⚙️" }
+          { id: "products", label: "Products", icon: "package" },
+          { id: "clients", label: "Clients", icon: "users" },
+          { id: "text", label: "Website Text", icon: "type" },
+          { id: "settings", label: "Settings", icon: "settings" }
         ].map(tab => (
           <button 
             key={tab.id} 
             onClick={() => setActiveTab(tab.id)} 
-            className={`p-4 rounded-xl font-medium transition-all transform hover:-translate-y-1 ${
+            className={`p-4 rounded-xl font-medium transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2 ${
               activeTab === tab.id 
                 ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg" 
                 : "bg-white shadow hover:shadow-md"
             }`}
           >
-            <span className="text-2xl mr-2">{tab.icon}</span>
+            <i data-lucide={tab.icon} className="w-5 h-5"></i>
             {tab.label}
           </button>
         ))}
@@ -187,7 +238,7 @@ function AdminDashboard() {
         {showPreview && (
           <div className="bg-white rounded-2xl shadow-xl overflow-hidden sticky top-6 h-fit">
             <div className="bg-gradient-to-r from-gray-100 to-gray-200 p-4 font-medium border-b flex items-center gap-2">
-              <Eye className="w-5 h-5 text-gray-600" />
+              <i data-lucide="eye" className="w-5 h-5 text-gray-600"></i>
               Live Preview
             </div>
             <div className="p-6 max-h-[80vh] overflow-y-auto">
@@ -207,6 +258,10 @@ function ProductManager({ products, setProducts }) {
   const [editing, setEditing] = useState(null);
   const fileInput = useRef();
 
+  useEffect(() => {
+    window.lucide?.createIcons();
+  }, [products, form]);
+
   const handleImage = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -217,7 +272,7 @@ function ProductManager({ products, setProducts }) {
 
   const addProduct = () => {
     if (!form.name || !form.price) {
-      alert("Name and price are required!");
+      alert("⚠️ Name and price are required!");
       return;
     }
     const newProd = {
@@ -244,7 +299,7 @@ function ProductManager({ products, setProducts }) {
   };
 
   const deleteProduct = (i) => {
-    if (confirm("Delete this product?")) {
+    if (confirm("❌ Delete this product?")) {
       setProducts(products.filter((_, idx) => idx !== i));
     }
   };
@@ -252,7 +307,7 @@ function ProductManager({ products, setProducts }) {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-lg">
       <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <Plus className="w-6 h-6 text-green-600" />
+        <i data-lucide="plus" className="w-6 h-6 text-green-600"></i>
         {editing !== null ? "Edit Product" : "Add Product"}
       </h3>
       
@@ -292,7 +347,7 @@ function ProductManager({ products, setProducts }) {
         />
         <div className="md:col-span-2">
           <label className="block mb-2 font-medium text-gray-700 flex items-center gap-2">
-            <ImageIcon className="w-5 h-5" />
+            <i data-lucide="image" className="w-5 h-5"></i>
             Product Image
           </label>
           <input 
@@ -306,10 +361,11 @@ function ProductManager({ products, setProducts }) {
             <div className="mt-4 relative group">
               <img src={form.image} className="h-40 w-full object-contain rounded-xl border-2 border-gray-200" alt="Preview" />
               <button
+                type="button"
                 onClick={() => setForm({ ...form, image: "" })}
                 className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
               >
-                <X className="w-4 h-4" />
+                <i data-lucide="x" className="w-4 h-4"></i>
               </button>
             </div>
           )}
@@ -320,39 +376,43 @@ function ProductManager({ products, setProducts }) {
         onClick={addProduct} 
         className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-xl mb-8 hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center gap-2"
       >
-        <Save className="w-5 h-5" />
+        <i data-lucide="save" className="w-5 h-5"></i>
         {editing !== null ? "Update Product" : "Add Product"}
       </button>
 
       <div className="space-y-4">
         <h4 className="text-xl font-bold text-gray-900">All Products ({products.length})</h4>
-        {products.map((p, i) => (
-          <div key={i} className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-green-50 rounded-xl border-2 border-gray-100 hover:shadow-md transition-all">
-            <div className="flex items-center gap-4">
-              {p.image && <img src={p.image} className="h-16 w-16 object-contain rounded-lg bg-white p-1" alt={p.name} />}
-              <div>
-                <strong className="text-lg text-gray-900">{p.name}</strong>
-                <div className="text-sm text-gray-600">{p.price} • {p.specs}</div>
+        {products.length === 0 ? (
+          <p className="text-center text-gray-500 py-8">No products added yet</p>
+        ) : (
+          products.map((p, i) => (
+            <div key={i} className="flex justify-between items-center p-4 bg-gradient-to-r from-gray-50 to-green-50 rounded-xl border-2 border-gray-100 hover:shadow-md transition-all">
+              <div className="flex items-center gap-4">
+                {p.image && <img src={p.image} className="h-16 w-16 object-contain rounded-lg bg-white p-1" alt={p.name} />}
+                <div>
+                  <strong className="text-lg text-gray-900">{p.name}</strong>
+                  <div className="text-sm text-gray-600">{p.price} • {p.specs}</div>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => editProduct(i)} 
+                  className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                  title="Edit"
+                >
+                  <i data-lucide="edit" className="w-5 h-5"></i>
+                </button>
+                <button 
+                  onClick={() => deleteProduct(i)} 
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Delete"
+                >
+                  <i data-lucide="trash" className="w-5 h-5"></i>
+                </button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button 
-                onClick={() => editProduct(i)} 
-                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                title="Edit"
-              >
-                <Edit className="w-5 h-5" />
-              </button>
-              <button 
-                onClick={() => deleteProduct(i)} 
-                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                title="Delete"
-              >
-                <Trash className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
@@ -361,6 +421,10 @@ function ProductManager({ products, setProducts }) {
 function ClientManager({ clients, setClients }) {
   const [url, setUrl] = useState("");
   const fileInput = useRef();
+
+  useEffect(() => {
+    window.lucide?.createIcons();
+  }, [clients]);
 
   const addClient = () => {
     const file = fileInput.current?.files[0];
@@ -375,12 +439,12 @@ function ClientManager({ clients, setClients }) {
       setClients([...clients, { src: url, alt: "Client" }]);
       setUrl("");
     } else {
-      alert("Please upload a file or enter a URL");
+      alert("⚠️ Please upload a file or enter a URL");
     }
   };
 
   const deleteClient = (i) => {
-    if (confirm("Delete this logo?")) {
+    if (confirm("❌ Delete this logo?")) {
       setClients(clients.filter((_, idx) => idx !== i));
     }
   };
@@ -388,7 +452,7 @@ function ClientManager({ clients, setClients }) {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-lg">
       <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <Upload className="w-6 h-6 text-green-600" />
+        <i data-lucide="upload" className="w-6 h-6 text-green-600"></i>
         Client Logos
       </h3>
       
@@ -440,7 +504,7 @@ function ClientManager({ clients, setClients }) {
               onClick={() => deleteClient(i)} 
               className="absolute -top-2 -right-2 bg-red-500 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
             >
-              <X className="w-4 h-4" />
+              <i data-lucide="x" className="w-4 h-4"></i>
             </button>
           </div>
         ))}
@@ -464,7 +528,8 @@ function TextEditor({ siteText, setSiteText }) {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-lg space-y-6">
       <h3 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        📝 Website Text
+        <i data-lucide="type" className="w-6 h-6 text-green-600"></i>
+        Website Text
       </h3>
       {Object.entries(fields).map(([key, config]) => (
         <div key={key}>
@@ -487,14 +552,14 @@ function Settings() {
 
   const changePassword = () => {
     if (newPass !== confirm) {
-      alert("Passwords don't match!");
+      alert("❌ Passwords don't match!");
       return;
     }
     if (newPass.length < 6) {
-      alert("Password must be at least 6 characters!");
+      alert("❌ Password must be at least 6 characters!");
       return;
     }
-    alert("✅ Password changed successfully!");
+    alert("✅ Password changed successfully!\n\n(Note: This is demo only. Refresh page to reset.)");
     setNewPass("");
     setConfirm("");
   };
@@ -502,7 +567,7 @@ function Settings() {
   return (
     <div className="bg-white p-6 rounded-2xl shadow-lg">
       <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
-        <Lock className="w-6 h-6 text-green-600" />
+        <i data-lucide="lock" className="w-6 h-6 text-green-600"></i>
         Change Password
       </h3>
       <div className="space-y-4">
@@ -522,10 +587,16 @@ function Settings() {
         />
         <button 
           onClick={changePassword} 
-          className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all"
+          className="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-3 rounded-xl hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center gap-2"
         >
+          <i data-lucide="shield-check" className="w-5 h-5"></i>
           Update Password
         </button>
+      </div>
+      <div className="mt-6 p-4 bg-blue-50 border-2 border-blue-100 rounded-xl">
+        <p className="text-sm text-blue-800">
+          <strong>ℹ️ Note:</strong> Password changes are for demo purposes only. Refresh the page to reset to default credentials.
+        </p>
       </div>
     </div>
   );
@@ -535,34 +606,43 @@ function PreviewContent({ products, clients, siteText }) {
   return (
     <div className="space-y-8">
       <div>
-        <h3 className="text-2xl font-bold text-green-700 mb-2">{siteText.heroTitle}</h3>
-        <p className="text-gray-600">{siteText.heroDesc}</p>
+        <h3 className="text-2xl font-bold text-green-700 mb-2">{siteText.heroTitle || "Hero Title"}</h3>
+        <p className="text-gray-600">{siteText.heroDesc || "Hero description"}</p>
       </div>
 
       <div>
         <h4 className="text-xl font-bold mb-4">Products Preview</h4>
-        <div className="grid gap-4">
-          {products.slice(0, 3).map((p, i) => (
-            <div key={i} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-              {p.image && <img src={p.image} className="h-20 w-full object-contain mb-2 rounded" alt={p.name} />}
-              <div className="font-bold">{p.name}</div>
-              <div className="text-sm text-gray-600">{p.specs}</div>
-              <div className="text-green-600 font-bold">{p.price}</div>
-            </div>
-          ))}
-        </div>
+        {products.length === 0 ? (
+          <p className="text-gray-500">No products to preview</p>
+        ) : (
+          <div className="grid gap-4">
+            {products.slice(0, 3).map((p, i) => (
+              <div key={i} className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                {p.image && <img src={p.image} className="h-20 w-full object-contain mb-2 rounded" alt={p.name} />}
+                <div className="font-bold">{p.name}</div>
+                <div className="text-sm text-gray-600">{p.specs}</div>
+                <div className="text-green-600 font-bold">{p.price}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>
         <h4 className="text-xl font-bold mb-4">Client Logos Preview</h4>
-        <div className="flex flex-wrap gap-4">
-          {clients.map((c, i) => (
-            <img key={i} src={c.src} className="h-12 opacity-70" alt={c.alt} />
-          ))}
-        </div>
+        {clients.length === 0 ? (
+          <p className="text-gray-500">No logos to preview</p>
+        ) : (
+          <div className="flex flex-wrap gap-4">
+            {clients.map((c, i) => (
+              <img key={i} src={c.src} className="h-12 opacity-70" alt={c.alt} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-export default AdminDashboard;
+const root = ReactDOM.createRoot(document.getElementById('app'));
+root.render(<AdminDashboard />);
